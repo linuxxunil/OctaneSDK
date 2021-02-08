@@ -46,86 +46,98 @@ public class IntelligentAntennaManagement {
                 throw new Exception("Must specify the '"
                         + SampleProperties.hostname + "' property");
             }
-
+            
             ImpinjReader reader = new ImpinjReader();
-            AntennaConfigGroup antennas;
-
-            // Connect
-            System.out.println("Connecting to " + hostname);
-            reader.connect(hostname);
-
-            // Get the default settings
             Settings settings = reader.queryDefaultSettings();
-            
-            ADD_ROSPEC addRospec = reader.buildAddROSpecMessage(settings);
-            SET_READER_CONFIG setReaderConfig = reader.buildSetReaderConfigMessage(settings);
-  
-            ROSpec rOSpec= addRospec.getROSpec();
-            AISpec aiSpec = (AISpec) rOSpec.getSpecParameterList().get(0);
-            InventoryParameterSpec inventoryParameterSpec = aiSpec.getInventoryParameterSpecList().get(0);
-            //inventoryParameterSpec.addToAntennaConfigurationList(antennaConfiguration);
-			
-            
-            for (int i = 0; i <inventoryParameterSpec.getAntennaConfigurationList().size(); i++) {
-				AntennaConfiguration antennaConfiguration = 
-							inventoryParameterSpec.getAntennaConfigurationList().get(i);
-				
-				// RFReceiver
-				RFReceiver rFReceiver = antennaConfiguration.getRFReceiver();
-				rFReceiver.setReceiverSensitivity(new UnsignedShort(1));
-				antennaConfiguration.setRFReceiver(rFReceiver);
-				
-				// RFTransmitter
-				RFTransmitter rFTransmitter = antennaConfiguration.getRFTransmitter();
-				rFTransmitter.setTransmitPower(new UnsignedShort(61));
-				rFTransmitter.setChannelIndex(new UnsignedShort(1));
-				rFTransmitter.setHopTableID(new UnsignedShort(1));
-				antennaConfiguration.setRFTransmitter(rFTransmitter);
-				
-				// C1G2InventoryCommand
-				C1G2InventoryCommand c1G2InventoryCommand = (C1G2InventoryCommand) 
-						antennaConfiguration.getAirProtocolInventoryCommandSettingsList().get(0);
-				c1G2InventoryCommand.setTagInventoryStateAware(new Bit(0));
-				
-				// C1G2InventoryCommand/C1G2RFControl
-				C1G2RFControl c1G2RFControl = c1G2InventoryCommand.getC1G2RFControl();
-				c1G2RFControl.setModeIndex(new UnsignedShort(3));
-				c1G2RFControl.setTari(new UnsignedShort(0));
-				c1G2InventoryCommand.setC1G2RFControl(c1G2RFControl);
-				
-				// C1G2InventoryCommand/C1G2SingulationControl
-				C1G2SingulationControl c1G2SingulationControl = c1G2InventoryCommand.getC1G2SingulationControl();
-				Bit[] dataBits = new Bit[2];
-				dataBits[0] = new Bit(0);
-				dataBits[1] = new Bit(1);
-				c1G2SingulationControl.setSession(new TwoBitField(dataBits));
-				c1G2SingulationControl.setTagPopulation(new UnsignedShort(2));
-				c1G2SingulationControl.setTagTransitTime(new UnsignedInteger(0));
-				c1G2InventoryCommand.setC1G2SingulationControl(c1G2SingulationControl);
-				
-				
-				List<Custom> customs = c1G2InventoryCommand.getCustomList();
-				customs.clear();
-				
-				ImpinjInventorySearchMode impinjInventorySearchMode = new ImpinjInventorySearchMode();
-				impinjInventorySearchMode.setInventorySearchMode(new ImpinjInventorySearchType(ImpinjInventorySearchType.Single_Target));
-				customs.add(impinjInventorySearchMode);
-				
-				ImpinjLowDutyCycle impinjLowDutyCycle = new ImpinjLowDutyCycle();
-				impinjLowDutyCycle.setLowDutyCycleMode(new ImpinjLowDutyCycleMode(ImpinjLowDutyCycleMode.Disabled));
-				impinjLowDutyCycle.setEmptyFieldTimeout(new UnsignedShort(10000));
-				impinjLowDutyCycle.setFieldPingInterval(new UnsignedShort(200));
-				customs.add(impinjLowDutyCycle);
-				
-				ImpinjIntelligentAntennaManagement impinjIntelligentAntennaManagement = new ImpinjIntelligentAntennaManagement();
-				impinjIntelligentAntennaManagement.setManagementEnabled(new ImpinjIntelligentAntennaMode(1));
-				
-				customs.add(impinjIntelligentAntennaManagement);
-            }
-			
-            
-            
-            reader.applySettings(setReaderConfig,addRospec);
+
+            ADD_ROSPEC AddROSpecMessage = reader.buildAddROSpecMessage(settings);
+            SET_READER_CONFIG SetReaderConfigMessage = reader.buildSetReaderConfigMessage(settings);
+
+            C1G2InventoryCommand c1g2Inv = new C1G2InventoryCommand();
+            c1g2Inv.setTagInventoryStateAware(new Bit(0));
+            ImpinjIntelligentAntennaManagement iIntelliAntMgmt = new ImpinjIntelligentAntennaManagement();
+            iIntelliAntMgmt.setManagementEnabled(new ImpinjIntelligentAntennaMode(ImpinjIntelligentAntennaMode.Enabled));
+
+            c1g2Inv.getCustomList().add(iIntelliAntMgmt);
+
+            reader.applySettings(SetReaderConfigMessage, AddROSpecMessage);
+
+//            ImpinjReader reader = new ImpinjReader();
+//            AntennaConfigGroup antennas;
+//
+//            // Connect
+//            System.out.println("Connecting to " + hostname);
+//            reader.connect(hostname);
+//
+//            // Get the default settings
+//            Settings settings = reader.queryDefaultSettings();
+//            
+//            ADD_ROSPEC addRospec = reader.buildAddROSpecMessage(settings);
+//            SET_READER_CONFIG setReaderConfig = reader.buildSetReaderConfigMessage(settings);
+//  
+//            ROSpec rOSpec= addRospec.getROSpec();
+//            AISpec aiSpec = (AISpec) rOSpec.getSpecParameterList().get(0);
+//            InventoryParameterSpec inventoryParameterSpec = aiSpec.getInventoryParameterSpecList().get(0);
+//            //inventoryParameterSpec.addToAntennaConfigurationList(antennaConfiguration);
+//			
+//            
+//            for (int i = 0; i <inventoryParameterSpec.getAntennaConfigurationList().size(); i++) {
+//				AntennaConfiguration antennaConfiguration = 
+//							inventoryParameterSpec.getAntennaConfigurationList().get(i);
+//				
+//				// RFReceiver
+//				RFReceiver rFReceiver = antennaConfiguration.getRFReceiver();
+//				rFReceiver.setReceiverSensitivity(new UnsignedShort(1));
+//				antennaConfiguration.setRFReceiver(rFReceiver);
+//				
+//				// RFTransmitter
+//				RFTransmitter rFTransmitter = antennaConfiguration.getRFTransmitter();
+//				rFTransmitter.setTransmitPower(new UnsignedShort(61));
+//				rFTransmitter.setChannelIndex(new UnsignedShort(1));
+//				rFTransmitter.setHopTableID(new UnsignedShort(1));
+//				antennaConfiguration.setRFTransmitter(rFTransmitter);
+//				
+//				// C1G2InventoryCommand
+//				C1G2InventoryCommand c1G2InventoryCommand = (C1G2InventoryCommand) 
+//						antennaConfiguration.getAirProtocolInventoryCommandSettingsList().get(0);
+//				c1G2InventoryCommand.setTagInventoryStateAware(new Bit(0));
+//				
+//				// C1G2InventoryCommand/C1G2RFControl
+//				C1G2RFControl c1G2RFControl = c1G2InventoryCommand.getC1G2RFControl();
+//				c1G2RFControl.setModeIndex(new UnsignedShort(3));
+//				c1G2RFControl.setTari(new UnsignedShort(0));
+//				c1G2InventoryCommand.setC1G2RFControl(c1G2RFControl);
+//				
+//				// C1G2InventoryCommand/C1G2SingulationControl
+//				C1G2SingulationControl c1G2SingulationControl = c1G2InventoryCommand.getC1G2SingulationControl();
+//				Bit[] dataBits = new Bit[2];
+//				dataBits[0] = new Bit(0);
+//				dataBits[1] = new Bit(1);
+//				c1G2SingulationControl.setSession(new TwoBitField(dataBits));
+//				c1G2SingulationControl.setTagPopulation(new UnsignedShort(2));
+//				c1G2SingulationControl.setTagTransitTime(new UnsignedInteger(0));
+//				c1G2InventoryCommand.setC1G2SingulationControl(c1G2SingulationControl);
+//				
+//				
+//				List<Custom> customs = c1G2InventoryCommand.getCustomList();
+//				customs.clear();
+//				
+//				ImpinjInventorySearchMode impinjInventorySearchMode = new ImpinjInventorySearchMode();
+//				impinjInventorySearchMode.setInventorySearchMode(new ImpinjInventorySearchType(ImpinjInventorySearchType.Single_Target));
+//				customs.add(impinjInventorySearchMode);
+//				
+//				ImpinjLowDutyCycle impinjLowDutyCycle = new ImpinjLowDutyCycle();
+//				impinjLowDutyCycle.setLowDutyCycleMode(new ImpinjLowDutyCycleMode(ImpinjLowDutyCycleMode.Disabled));
+//				impinjLowDutyCycle.setEmptyFieldTimeout(new UnsignedShort(10000));
+//				impinjLowDutyCycle.setFieldPingInterval(new UnsignedShort(200));
+//				customs.add(impinjLowDutyCycle);
+//				
+//				ImpinjIntelligentAntennaManagement impinjIntelligentAntennaManagement = new ImpinjIntelligentAntennaManagement();
+//				impinjIntelligentAntennaManagement.setManagementEnabled(new ImpinjIntelligentAntennaMode(1));
+//				
+//				customs.add(impinjIntelligentAntennaManagement);
+//            }
+//            reader.applySettings(setReaderConfig,addRospec);
             
 
             // Apply the new settings
